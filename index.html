@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord Timestamp Generator</title>
@@ -63,6 +63,7 @@
         background-color: #2f3136;
         padding: 0.25rem 0.5rem;
         border-radius: 3px;
+        word-break: break-all;
     }
     .copy-btn {
         background-color: #7289da;
@@ -80,63 +81,71 @@
         background-color: #5b6eae;
     }
     </style>
-    </head>
-    <body>
-        <div class="container">
-        <h1>Discord Timestamp Generator</h1>
-        <div class="input-group">
-        <label for="datetime-input">Select Date and Time:</label>
-        <input type="datetime-local" id="datetime-input">
-        </div>
-        <div class="output-group" id="output-group">
-        </div>
-        </div>
-        <script>
-            const datetimeInput = document.getElementById('datetime-input');
-            const outputGroup = document.getElementById('output-group');
+</head>
+<body>
+    <div class="container">
+    <h1>Discord Timestamp Generator</h1>
+    <div class="input-group">
+    <label for="datetime-input">Select Date and Time:</label>
+    <input type="datetime-local" id="datetime-input">
+    </div>
+    <div class="output-group" id="output-group">
+    </div>
+    </div>
+    <script>
+        const datetimeInput = document.getElementById('datetime-input');
+        const outputGroup = document.getElementById('output-group');
 
-            function generateTimestamps() {
-                const selectedDate = new Date(datetimeInput.value);
-                if (isNaN(selectedDate.getTime())) {
-                    outputGroup.innerHTML = '';
-                    return;
-                }
+        function generateTimestamps() {
+            // Use valueAsNumber for a reliable millisecond timestamp, avoiding parsing issues.
+            const timestampInMs = datetimeInput.valueAsNumber;
 
-                const unixTimestamp = Math.floor(selectedDate.getTime() / 1000);
-
-                const formats = [
-                    { label: 'Short Time', code: 't' },
-                    { label: 'Long Time', code: 'T' },
-                    { label: 'Short Date', code: 'd' },
-                    { label: 'Long Date', code: 'D' },
-                    { label: 'Short Date/Time', code: 'f' },
-                    { label: 'Long Date/Time', code: 'F' },
-                    { label: 'Relative', code: 'R' }
-                ];
-
-                outputGroup.innerHTML = formats.map(format => `
-                    <div class="output-format">
-                        <span>${format.label}: \`<t:${unixTimestamp}:${format.code}>\`</span>
-                        <button class="copy-btn" onclick="copyToClipboard('<t:${unixTimestamp}:${format.code}>')">Copy</button>
-                    </div>
-                `).join('');
+            if (isNaN(timestampInMs)) {
+                outputGroup.innerHTML = '';
+                return;
             }
 
-            function copyToClipboard(text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('Copied to clipboard!');
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                });
-            }
+            // Convert milliseconds to a Unix timestamp in seconds.
+            const unixTimestamp = Math.floor(timestampInMs / 1000);
 
-            datetimeInput.addEventListener('input', generateTimestamps);
+            const formats = [
+                { label: 'Short Time', code: 't' },
+                { label: 'Long Time', code: 'T' },
+                { label: 'Short Date', code: 'd' },
+                { label: 'Long Date', code: 'D' },
+                { label: 'Short Date/Time', code: 'f' },
+                { label: 'Long Date/Time', code: 'F' },
+                { label: 'Relative', code: 'R' }
+            ];
 
-            // Set initial value to current date and time
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            datetimeInput.value = now.toISOString().slice(0, 16);
-            generateTimestamps();
-        </script>
-    </body>
+            outputGroup.innerHTML = formats.map(format => `
+                <div class="output-format">
+                    <span>${format.label}: \`<t:${unixTimestamp}:${format.code}>\`</span>
+                    <button class="copy-btn" onclick="copyToClipboard('<t:${unixTimestamp}:${format.code}>')">Copy</button>
+                </div>
+            `).join('');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Optional: Provide feedback to the user, e.g., by changing button text.
+                // For simplicity, the alert is kept.
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard.');
+            });
+        }
+
+        datetimeInput.addEventListener('input', generateTimestamps);
+
+        // Set initial value to the user's current local date and time.
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        datetimeInput.value = now.toISOString().slice(0, 16);
+        
+        // Trigger the function on page load to generate initial timestamps.
+        generateTimestamps();
+    </script>
+</body>
 </html>
