@@ -97,10 +97,11 @@
         const outputGroup = document.getElementById('output-group');
 
         function generateTimestamps() {
-            // Use valueAsNumber for a reliable millisecond timestamp, avoiding parsing issues.
+            // This is the key change: Use .valueAsNumber for a reliable timestamp.
             const timestampInMs = datetimeInput.valueAsNumber;
 
             if (isNaN(timestampInMs)) {
+                // If the date is invalid, clear the previews.
                 outputGroup.innerHTML = '';
                 return;
             }
@@ -118,6 +119,7 @@
                 { label: 'Relative', code: 'R' }
             ];
 
+            // This part now runs correctly and generates the HTML with the visible previews.
             outputGroup.innerHTML = formats.map(format => `
                 <div class="output-format">
                     <span>${format.label}: \`<t:${unixTimestamp}:${format.code}>\`</span>
@@ -128,8 +130,6 @@
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                // Optional: Provide feedback to the user, e.g., by changing button text.
-                // For simplicity, the alert is kept.
                 alert('Copied to clipboard!');
             }).catch(err => {
                 console.error('Failed to copy: ', err);
@@ -144,7 +144,7 @@
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         datetimeInput.value = now.toISOString().slice(0, 16);
         
-        // Trigger the function on page load to generate initial timestamps.
+        // Trigger the function on page load to generate the initial previews.
         generateTimestamps();
     </script>
 </body>
