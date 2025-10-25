@@ -73,6 +73,7 @@
         border-radius: 4px;
         cursor: pointer;
         transition: background-color 0.2s;
+        white-space: nowrap;
     }
     .copy-btn:hover {
         background-color: #677bc4;
@@ -96,17 +97,55 @@
         const datetimeInput = document.getElementById('datetime-input');
         const outputGroup = document.getElementById('output-group');
 
+        function formatDiscordTimestamp(unixTimestamp, formatCode) {
+            const date = new Date(unixTimestamp * 1000);
+            
+            const options = {
+                t: { timeStyle: 'short' },
+                T: { timeStyle: 'medium' },
+                d: { dateStyle: 'short' },
+                D: { dateStyle: 'long' },
+                f: { dateStyle: 'short', timeStyle: 'short' },
+                F: { dateStyle: 'long', timeStyle: 'short' }
+            };
+
+            if (formatCode === 'R') {
+                const now = Date.now();
+                const diff = Math.floor((date.getTime() - now) / 1000);
+                const absDiff = Math.abs(diff);
+                
+                if (absDiff < 60) return diff < 0 ? `${absDiff} seconds ago` : `in ${absDiff} seconds`;
+                if (absDiff < 3600) {
+                    const mins = Math.floor(absDiff / 60);
+                    return diff < 0 ? `${mins} minute${mins !== 1 ? 's' : ''} ago` : `in ${mins} minute${mins !== 1 ? 's' : ''}`;
+                }
+                if (absDiff < 86400) {
+                    const hours = Math.floor(absDiff / 3600);
+                    return diff < 0 ? `${hours} hour${hours !== 1 ? 's' : ''} ago` : `in ${hours} hour${hours !== 1 ? 's' : ''}`;
+                }
+                if (absDiff < 2592000) {
+                    const days = Math.floor(absDiff / 86400);
+                    return diff < 0 ? `${days} day${days !== 1 ? 's' : ''} ago` : `in ${days} day${days !== 1 ? 's' : ''}`;
+                }
+                if (absDiff < 31536000) {
+                    const months = Math.floor(absDiff / 2592000);
+                    return diff < 0 ? `${months} month${months !== 1 ? 's' : ''} ago` : `in ${months} month${months !== 1 ? 's' : ''}`;
+                }
+                const years = Math.floor(absDiff / 31536000);
+                return diff < 0 ? `${years} year${years !== 1 ? 's' : ''} ago` : `in ${years} year${years !== 1 ? 's' : ''}`;
+            }
+
+            return date.toLocaleString(undefined, options[formatCode]);
+        }
+
         function generateTimestamps() {
-            // This is the key change: Use .valueAsNumber for a reliable timestamp.
             const timestampInMs = datetimeInput.valueAsNumber;
 
             if (isNaN(timestampInMs)) {
-                // If the date is invalid, clear the previews.
                 outputGroup.innerHTML = '';
                 return;
             }
 
-            // Convert milliseconds to a Unix timestamp in seconds.
             const unixTimestamp = Math.floor(timestampInMs / 1000);
 
             const formats = [
@@ -119,13 +158,19 @@
                 { label: 'Relative', code: 'R' }
             ];
 
-            // This part now runs correctly and generates the HTML with the visible previews.
-            outputGroup.innerHTML = formats.map(format => `
+            outputGroup.innerHTML = formats.map(format => {
+                const preview = formatDiscordTimestamp(unixTimestamp, format.code);
+                return `
                 <div class="output-format">
-                    <span>${format.label}: \`<t:${unixTimestamp}:${format.code}>\`</span>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: #b9bbbe; margin-bottom: 0.25rem;">${format.label}</div>
+                        <div style="margin-bottom: 0.25rem;">${preview}</div>
+                        <span style="font-size: 0.85rem;">\`&lt;t:${unixTimestamp}:${format.code}&gt;\`</span>
+                    </div>
                     <button class="copy-btn" onclick="copyToClipboard('<t:${unixTimestamp}:${format.code}>')">Copy</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function copyToClipboard(text) {
@@ -139,12 +184,10 @@
 
         datetimeInput.addEventListener('input', generateTimestamps);
 
-        // Set initial value to the user's current local date and time.
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         datetimeInput.value = now.toISOString().slice(0, 16);
         
-        // Trigger the function on page load to generate the initial previews.
         generateTimestamps();
     </script>
 </body>
